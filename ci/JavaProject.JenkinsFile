@@ -11,6 +11,7 @@ pipeline {
                 checkout scmGit(branches: [[name: "$branch_name"]], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ada88/demo-java-project.git']])
             }
         }
+        
         stage('Build') {
             steps {
                 sh '''
