@@ -1,0 +1,50 @@
+pipeline {
+    
+    agent {
+        label 'agent1'
+    }
+
+    stages {
+        stage('Chekout') {
+            steps {
+                cleanWs()
+                checkout scmGit(branches: [[name: "$branch_name"]], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ada88/demo-java-project.git']])
+            }
+        }
+        stage('Build') {
+            steps {
+                sh '''
+                    pwd
+                    ls -ltr
+                    echo "Build step started"
+                    export PATH="$PATH:/opt/gradle/gradle-7.6/bin"
+
+                    gradle build
+                '''
+            }
+        }
+        stage('Test') {
+            steps {
+                sh '''
+                    echo "Checking jar file"
+                    cd build/libs
+                    ls -ltr
+
+                    mv demo-0.0.1-SNAPSHOT.jar demo-0.0.1-SNAPSHOT-${BUILD_NUMBER}.jar
+                    rm demo-0.0.1-SNAPSHOT-plain.jar
+
+                    cp *.jar /ArchivedPackages
+
+                    nohup java -jar demo-0.0.1-SNAPSHOT-${BUILD_NUMBER}.jar &
+                    sleep 30
+                '''
+            }
+        }
+        
+    }
+    post {
+        always {
+        archiveArtifacts artifacts: 'build/libs/*.jar', followSymlinks: false
+        }
+    }
+}
